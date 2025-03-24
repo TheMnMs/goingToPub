@@ -44,3 +44,79 @@ SO basically,
 | `while true; do esearch -db pubmed -query "mRNA vaccine" | efetch -format abstract; sleep 3600; done` | Continuously **stream** the latest research every hour. | `while true; do esearch -db pubmed -query "mRNA vaccine" | efetch -format abstract; sleep 3600; done` |
 
 
+
+
+# Biopython Entrez Guide
+
+## Introduction
+Biopython's `Entrez` module provides a powerful interface to the NCBI Entrez databases, allowing users to programmatically search, fetch, and analyze biomedical literature and other biological data. This guide covers installation, basic queries, and fetching article details from PubMed using `Entrez`.
+
+## Installation
+To use the `Entrez` module, install Biopython using pip:
+
+```sh
+pip install biopython
+```
+
+## Setting Up Entrez
+NCBI requires users to provide an email address when making queries. Set your email before making requests:
+
+```python
+from Bio import Entrez
+Entrez.email = "your_email@example.com"  # Replace with your email
+```
+
+## Searching PubMed
+You can search PubMed for articles on a specific topic using `esearch`:
+
+```python
+handle = Entrez.esearch(db="pubmed", term="machine learning", retmax=10, retmode="json")
+record = handle.read()
+print(record)
+```
+
+- `db="pubmed"`: Specifies PubMed as the target database.
+- `term="machine learning"`: The query to search for. To fetch retracted publication use: ```'"retracted publication"cancer'```
+- `retmax=10`: Maximum number of results to return.
+- `retmode="json"`: Returns results in JSON format.
+
+## Fetching Article Details
+Once you obtain a PubMed ID (PMID), you can fetch detailed information using `efetch`:
+
+```python
+handle = Entrez.efetch(db="pubmed", id="12345678", retmode="xml")
+xml_data = handle.read()
+print(xml_data)
+```
+
+- Replace `12345678` with the actual PMID of the paper you want to fetch.
+- `retmode="xml"` returns structured data that can be parsed.
+
+## Extracting Titles, Abstracts, and Authors
+To extract specific details, use the `xml.etree.ElementTree` module:
+
+```python
+import xml.etree.ElementTree as ET
+
+root = ET.fromstring(xml_data)
+title = root.find(".//ArticleTitle").text
+abstract = root.find(".//AbstractText").text
+
+print(f"Title: {title}")
+print(f"Abstract: {abstract}")
+```
+
+## Retrieving Retracted Papers
+You can filter and fetch retracted papers using:
+
+```python
+query = '"retracted publication"[Publication Type]'
+handle = Entrez.esearch(db="pubmed", term=query, retmax=5, retmode="json")
+record = handle.read()
+print(record)
+```
+
+This will return the PubMed IDs of retracted papers, which can be fetched using `efetch`.
+
+For more details, refer to the [Biopython Entrez Documentation](https://biopython.org/wiki/Entrez).
+
